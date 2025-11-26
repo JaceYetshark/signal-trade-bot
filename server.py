@@ -318,7 +318,37 @@ def webhook():
         update_data = request.get_json(force=True)
         logger.info(f"📨 Received webhook update")
         
-        # Parse the update
+        # Handle direct messages to the bot
+        if 'message' in update_data:
+            message = update_data['message']
+            chat_id = message.get('chat', {}).get('id')
+            text = message.get('text', '')
+            
+            if text.startswith('/'):
+                # Handle bot commands
+                if text == '/start':
+                    asyncio.run(bot.send_message(
+                        chat_id=chat_id,
+                        text="🤖 **Star-trader Bot is ACTIVE!**\n\n"
+                             "📊 I'm monitoring trading signals 24/7\n"
+                             "💱 Tracking: XAUUSD, BTC, EUR, GBP, and more\n"
+                             "📈 Dashboard: https://signal-trade-bot-5.onrender.com/\n\n"
+                             "✅ Bot Status: ONLINE"
+                    ))
+                    logger.info(f"✅ Responded to /start from chat {chat_id}")
+                elif text == '/stats':
+                    stats = get_stats()
+                    asyncio.run(bot.send_message(
+                        chat_id=chat_id,
+                        text=f"📊 **Signal Statistics**\n\n"
+                             f"Total Signals: {stats['total_signals']}\n"
+                             f"🟢 Buy Signals: {stats['buy_signals']}\n"
+                             f"🔴 Sell Signals: {stats['sell_signals']}\n"
+                             f"🚨 Critical Alerts: {stats['critical_alerts']}"
+                    ))
+                    logger.info(f"✅ Sent stats to chat {chat_id}")
+        
+        # Handle channel posts (existing code)
         if 'channel_post' in update_data:
             channel_post = update_data['channel_post']
             channel_name = channel_post.get('chat', {}).get('title', 'Unknown')
